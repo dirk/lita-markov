@@ -5,9 +5,7 @@ require 'lita/handlers/markov/engine'
 
 module Lita::Handlers
   class Markov
-    attr_reader :engine
-
-    config :database_url
+    config :database_url, type: String, required: true
     
     route(/.+/, :ingest, command: false)
 
@@ -15,10 +13,8 @@ module Lita::Handlers
       'markov USER' => 'Generate a markov chain from the given user.'
     })
 
-    def initialize(robot)
-      super(robot)
-
-      @engine = Engine.new self
+    def engine
+      @engine ||= Engine.new config.database_url
     end
 
     def ingest(chat)
@@ -30,7 +26,7 @@ module Lita::Handlers
       # Get the mention name (ie. 'dirk') of the user
       id = chat.user.id
 
-      @engine.ingest id, message
+      engine.ingest id, message
     end
 
     def generate(chat)
@@ -38,7 +34,7 @@ module Lita::Handlers
       id   = Lita::User.fuzzy_find(name).id
 
       begin
-        sentence = @engine.generate_sentence_for id
+        sentence = engine.generate_sentence_for id
 
         chat.reply sentence
       rescue Engine::EmptyDictionaryError

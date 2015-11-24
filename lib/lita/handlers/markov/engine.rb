@@ -10,12 +10,11 @@ class Lita::Handlers::Markov
     attr_accessor :handler
     attr_reader :db
 
-    def initialize(handler = nil)
+    def initialize(database_url = nil)
       @handler = handler
       @depth   = 2
 
-      database_url = DEFAULT_DATABASE_URL
-      database_url ||= handler.config.database_url if handler
+      database_url = database_url || DEFAULT_DATABASE_URL
 
       @db = Sequel.connect database_url
 
