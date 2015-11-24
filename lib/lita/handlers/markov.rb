@@ -31,10 +31,15 @@ module Lita::Handlers
 
     def generate(chat)
       name = chat.matches[0][0].strip
-      id   = Lita::User.fuzzy_find(name).id
+      user = Lita::User.fuzzy_find name
+
+      if user.nil?
+        chat.reply "Couldn't find the user #{name}. :("
+        return
+      end
 
       begin
-        sentence = engine.generate_sentence_for id
+        sentence = engine.generate_sentence_for user.id
 
         chat.reply sentence
       rescue Engine::EmptyDictionaryError
