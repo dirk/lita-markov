@@ -21,11 +21,12 @@ describe Lita::Handlers::Markov, lita_handler: true do
 
     expect(replies.count).to eql 1
 
+    reply = replies[0]
     possible_replies = [
-      'I love cookies!',
-      'I love pancakes!'
+      'I love cookies.',
+      'I love pancakes.'
     ]
-    expect(possible_replies).to include replies[0]
+    expect(possible_replies.any? { |r| reply.include?(r) }).to eql true
   end
 
   it "will complain if the user hasn't said anything" do

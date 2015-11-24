@@ -105,6 +105,19 @@ class Lita::Handlers::Markov
         .select(:next_state, :frequency)
         .all
 
+      sample_states(states)
+    end
+
+    def get_random_next_state(user)
+      states = @db[:dictionary]
+        .where(user: user)
+        .select(:next_state, :frequency)
+        .all
+
+      sample_states states
+    end
+
+    def sample_states(states)
       distribution = states.flat_map do |state|
         Array.new(state[:frequency]) { state[:next_state] }
       end
@@ -112,26 +125,49 @@ class Lita::Handlers::Markov
       distribution.sample
     end
 
-    def generate_sentence_for(user, length = 30)
+    def start_new_sentence(user, sentence)
       first_word = random_capitalized_word user
       second_word = random_second_word user, first_word
 
-      sentence = [first_word, second_word]
+      sentence << first_word
+      sentence << second_word
+    end
+
+    def generate_sentence_for(user, length = 30)
+      sentence               = []
       ended_with_punctuation = false
+
+      start_new_sentence user, sentence
 
       while sentence.length < length
         current_state = sentence.slice(sentence.length - @depth, @depth).join ' '
 
         next_state = get_next_state user, current_state
 
-        # Stop if we failed to find a next state
-        break if next_state.nil?
+        if next_state.nil?
+          if sentence.length > (length / 2)
+            # Stop if we failed to find a next state and it's long enough
+            break
+          else
+            # Otherwise pick a completely random next-state from the user
+            # for the lols
+            next_state = get_random_next_state user
+          end
+        end
 
         sentence << next_state
 
         if next_state == '.'
-          ended_with_punctuation = true
-          break
+          if sentence.length > (length / 2)
+            # If it's long enough then we can end on a period
+            ended_with_punctuation = true
+            break
+          else
+            # Otherwise append a period and start a fresh sentence
+            last = sentence.pop
+            sentence.push(sentence.pop + last)
+            start_new_sentence user, sentence
+          end
         end
       end
 
