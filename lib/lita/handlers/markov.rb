@@ -13,8 +13,12 @@ module Lita::Handlers
       'markov USER' => 'Generate a markov chain from the given user.'
     })
 
+    # Share the engine instance between all instances of the bot
+    def self.engine(instance)
+      @engine ||= Engine.new(instance.config.database_url)
+    end
     def engine
-      @engine ||= Engine.new config.database_url
+      self.class.engine(self)
     end
 
     def ingest(chat)
