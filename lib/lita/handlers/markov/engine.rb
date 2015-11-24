@@ -69,8 +69,10 @@ class Lita::Handlers::Markov
       end
     end
 
-    def random_capitalized_word
-      states = @db[:dictionary].map(:current_state)
+    def random_capitalized_word(user)
+      states = @db[:dictionary]
+        .where(user: user)
+        .map(:current_state)
 
       capitalized_states = states.select do |state|
         /^[A-Z]/ =~ state
@@ -87,9 +89,10 @@ class Lita::Handlers::Markov
       return state.split(' ').first
     end
 
-    def random_second_word(first_word)
+    def random_second_word(user, first_word)
       states = @db[:dictionary]
         .where(Sequel.like(:current_state, first_word+'%'))
+        .where(user: user)
         .map(:current_state)
 
       state = states.sample
@@ -97,7 +100,7 @@ class Lita::Handlers::Markov
     end
 
     def is_punctuation?(string)
-      PUNCTUATION.any? { |p| string.end_with? p }
+      PUNCTUATION.any? { |p| string == p }
     end
 
     def get_next_state(user, current_state)
@@ -114,10 +117,11 @@ class Lita::Handlers::Markov
     end
 
     def generate_sentence_for(user, length = 30)
-      first_word = random_capitalized_word
-      second_word = random_second_word first_word
+      first_word = random_capitalized_word user
+      second_word = random_second_word user, first_word
 
       sentence = [first_word, second_word]
+      ended_with_punctuation = false
 
       while sentence.length < length
         current_state = sentence.slice(sentence.length - @depth, @depth).join ' '
@@ -129,10 +133,17 @@ class Lita::Handlers::Markov
 
         sentence << next_state
 
-        break if is_punctuation? next_state
+        if is_punctuation? next_state
+          ended_with_punctuation = true
+          break
+        end
       end
 
-      sentence.slice(0..-2).join(' ') + sentence.last
+      chain = sentence.slice(0..-2).join(' ')
+      chain << ' ' unless ended_with_punctuation
+      chain << sentence.last
+
+      chain
     end
 
     def separate_string string
