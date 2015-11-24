@@ -34,7 +34,7 @@ class Lita::Handlers::Markov
       string = sanitize_string string
       words  = separate_string string
 
-      return if words.length == 0
+      return if words.length < @depth
 
       # Capitalize the first word and add a period at the end
       words = [words[0].capitalize] + words.slice(1..-1) + ['.']
