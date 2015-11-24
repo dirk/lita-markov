@@ -3,7 +3,7 @@ require 'pry'
 
 describe Lita::Handlers::Markov, lita_handler: true do
   before(:each) do
-    Lita.redis.flushall
+    subject.engine.db[:dictionary].delete
   end
 
   it "won't call #ingest for non-command messages" do
@@ -11,16 +11,6 @@ describe Lita::Handlers::Markov, lita_handler: true do
 
     send_message "#{robot.name} foo"
     send_command 'bar'
-  end
-
-  it "will ingest a message into that person's dictionary" do
-    send_message 'hello markov world'
-    send_message 'hello markov planet'
-
-    dictionary = subject.dictionary_for_user user.mention_name
-
-    # Check that the messages made it into the dictionary
-    expect(dictionary.dictionary[['hello', 'markov']]).to eql ['world', 'planet']
   end
 
   it 'will build a sentence' do

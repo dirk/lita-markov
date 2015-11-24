@@ -1,14 +1,25 @@
-module Lita::Handlers
-  class Markov < Lita::Handler
-    Dictionary = MarkyMarkov::PersistentJSONDictionary
+# Forward definition of Markov handler class
+class Lita::Handlers::Markov < Lita::Handler; end
 
-    REDIS_KEY_PREFIX = 'lita-markov:'
+require 'lita/handlers/markov/engine'
+
+module Lita::Handlers
+  class Markov
+    attr_reader :engine
+
+    config :database_url
     
     route(/.+/, :ingest, command: false)
 
     route(/markov (.+)/, :generate, command: true, help: {
       'markov USER' => 'Generate a markov chain from the given user.'
     })
+
+    def initialize(robot)
+      super(robot)
+
+      @engine = Engine.new self
+    end
 
     def ingest(chat)
       # Don't ingest messages addressed to ourselves
@@ -17,26 +28,20 @@ module Lita::Handlers
       message = chat.matches[0].strip
 
       # Get the mention name (ie. 'dirk') of the user
-      name       = chat.user.mention_name
-      dictionary = dictionary_for_user name
+      id = chat.user.id
 
-      # Passing `false` to indicate it's a string and not a file name
-      dictionary.parse_source message, false
-
-      save_dictionary name, dictionary
+      @engine.ingest id, message
     end
 
     def generate(chat)
       name = chat.matches[0][0].strip
-
-      dictionary = dictionary_for_user name
-      generator  = MarkovSentenceGenerator.new dictionary
+      id   = Lita::User.fuzzy_find(name).id
 
       begin
-        sentence = generator.generate_sentence 1
+        sentence = @engine.generate_sentence_for id
 
         chat.reply sentence
-      rescue EmptyDictionaryError
+      rescue Engine::EmptyDictionaryError
         chat.reply "Looks like #{name} hasn't said anything!"
       end
     end

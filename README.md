@@ -11,6 +11,17 @@ Add `lita-markov` to your Lita instance's Gemfile:
 gem 'lita-markov'
 ```
 
+Configure the database URL for your SQL database
+([Sequel](http://sequel.jeremyevans.net/) is used for
+communicating with databases):
+
+```ruby
+# lita_config.rb
+Lita.configure do |config|
+  config.handlers.markov.database_url = ENV['DATABASE_URL']
+end
+```
+
 ## Usage
 
 The bot will automatically ingest all messages into the Redis-backed Markov
