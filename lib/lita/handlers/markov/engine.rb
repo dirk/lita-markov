@@ -146,35 +146,42 @@ class Lita::Handlers::Markov
       chain
     end
 
+    STRING_SEPARATOR = /([.!?])|\s+/
+
     def separate_string string
       # Including the punctuation in group so they'll be included in the
       # split results
       string
-        .split(/([.!?])|\s+/)
-        .map { |w| w.strip }
+        .split(STRING_SEPARATOR)
+        .map { |w| w.strip!; w }
         .select { |w| !w.empty? }
     end
 
-    PUNCTUATION = ['.', '!', '?']
+    PUNCTUATION = [',', '.', '!', '?']
 
     # Don't allow anything besides letters, digits, whitespace, and puncutation
     ILLEGAL_CHARACTERS = /[^\w\d\s:;,.!?#@]/
 
+    HYPERLINKS          = /http[^\s]+/
     SIMPLE_CODE_BLOCK   = /`[^`]+`/
     EXTENDED_CODE_BLOCK = /```.+```/m
 
+    REPEATED_PUNCTUATION = /([.!?])[.!?]+/
+    BASIC_PUNCTUATION    = /([;,.!?])/
+
+
     def sanitize_string string
       string = string
-        .strip()
-        .gsub(/http[^\s]+/, '')        # Remove any hyperlinks
-        .gsub(SIMPLE_CODE_BLOCK, '')   # Remove code blocks and illegal characters
-        .gsub(EXTENDED_CODE_BLOCK, '')
-        .gsub(ILLEGAL_CHARACTERS, '')
-        .gsub(/([:;,.!?])/, '\1 ')     # Put whitespace after punctuation for proper separation
+        .gsub(HYPERLINKS, ''.freeze)             # Remove any hyperlinks
+        .gsub(SIMPLE_CODE_BLOCK, ''.freeze)      # Remove code blocks and illegal characters
+        .gsub(EXTENDED_CODE_BLOCK, ''.freeze)
+        .gsub(ILLEGAL_CHARACTERS, ''.freeze)
+        .gsub(REPEATED_PUNCTUATION, '\1'.freeze) # Trim down repeated punctuation
+        .gsub(BASIC_PUNCTUATION, '\1 '.freeze)   # Put whitespace after punctuation for proper separation
         .strip()
 
       ends_with_punctuation = PUNCTUATION.any? { |p| string.end_with? p }
-      string = string+'.' unless ends_with_punctuation
+      string = string+'.'.freeze unless ends_with_punctuation
 
       string
     end
