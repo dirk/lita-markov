@@ -36,8 +36,8 @@ class Lita::Handlers::Markov
 
       return if words.length == 0
 
-      # Capitalize the first word
-      words = [words[0].capitalize] + words.slice(1..-1)
+      # Capitalize the first word and add a period at the end
+      words = [words[0].capitalize] + words.slice(1..-1) + ['.']
 
       # Iterate over it one step at a time in sets of `@depth + 1`
       words.each_cons(@depth + 1) do |words|
@@ -99,10 +99,6 @@ class Lita::Handlers::Markov
       state.split(' ').last
     end
 
-    def is_punctuation?(string)
-      PUNCTUATION.any? { |p| string == p }
-    end
-
     def get_next_state(user, current_state)
       states = @db[:dictionary]
         .where(user: user, current_state: current_state)
@@ -133,7 +129,7 @@ class Lita::Handlers::Markov
 
         sentence << next_state
 
-        if is_punctuation? next_state
+        if next_state == '.'
           ended_with_punctuation = true
           break
         end
@@ -146,7 +142,7 @@ class Lita::Handlers::Markov
       chain
     end
 
-    STRING_SEPARATOR = /([.!?])|\s+/
+    STRING_SEPARATOR = /\s+/
 
     def separate_string string
       # Including the punctuation in group so they'll be included in the
@@ -157,33 +153,22 @@ class Lita::Handlers::Markov
         .select { |w| !w.empty? }
     end
 
-    PUNCTUATION = [',', '.', '!', '?']
-
     # Don't allow anything besides letters, digits, whitespace, and puncutation
-    ILLEGAL_CHARACTERS = /[^\w\d\s:;,.!?#@]/
+    NON_WORD_CHARACTERS = /[^\w\d'"“”’:+-]/
 
     HYPERLINKS          = /http[^\s]+/
     SIMPLE_CODE_BLOCK   = /`[^`]+`/
     EXTENDED_CODE_BLOCK = /```.+```/m
-
-    REPEATED_PUNCTUATION = /([.!?])[.!?]+/
-    BASIC_PUNCTUATION    = /([;,.!?])/
-
+    REPEATED_WHITESPACE = /\s+/
 
     def sanitize_string string
       string = string
         .gsub(HYPERLINKS, ''.freeze)             # Remove any hyperlinks
         .gsub(SIMPLE_CODE_BLOCK, ''.freeze)      # Remove code blocks and illegal characters
         .gsub(EXTENDED_CODE_BLOCK, ''.freeze)
-        .gsub(ILLEGAL_CHARACTERS, ''.freeze)
-        .gsub(REPEATED_PUNCTUATION, '\1'.freeze) # Trim down repeated punctuation
-        .gsub(BASIC_PUNCTUATION, '\1 '.freeze)   # Put whitespace after punctuation for proper separation
+        .gsub(NON_WORD_CHARACTERS, ' '.freeze)   # Convert non-word characters into whitespace
+        .gsub(REPEATED_WHITESPACE, ' '.freeze)   # Convert repeated whitespace into just single spaces
         .strip()
-
-      ends_with_punctuation = PUNCTUATION.any? { |p| string.end_with? p }
-      string = string+'.'.freeze unless ends_with_punctuation
-
-      string
     end
   end
 end
