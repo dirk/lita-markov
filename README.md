@@ -1,6 +1,6 @@
-# Markov chains for Lita
+# Markov chains for [Lita](https://www.lita.io/)
 
-Listens to your public chat rooms and generates Markov chain databases
+Listens to your public chat rooms and creates Markov chain databases
 for each user.
 
 ## Installation
@@ -18,6 +18,8 @@ communicating with databases):
 ```ruby
 # lita_config.rb
 Lita.configure do |config|
+  # For example, using Heroku and their Postgresql addon, the database can be
+  # configured by simply doing:
   config.handlers.markov.database_url = ENV['DATABASE_URL']
 end
 ```
