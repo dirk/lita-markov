@@ -29,6 +29,15 @@ describe Lita::Handlers::Markov, lita_handler: true do
     expect(possible_replies.any? { |r| reply.include?(r) }).to eql true
   end
 
+  it 'will also accept @-names' do
+    send_message 'I like cookies.'
+
+    send_command "#{robot.name} markov @#{user.mention_name}"
+
+    expect(replies.count).to eql 1
+    expect(replies[0]).to include('I like cookies.')
+  end
+
   it "will complain if the user hasn't said anything" do
     send_command "#{robot.name} markov #{user.mention_name}"
 

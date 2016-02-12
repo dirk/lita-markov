@@ -9,7 +9,7 @@ module Lita::Handlers
     template_root File.expand_path('../../../../templates', __FILE__)
 
     config :database_url, type: String, required: true
-    
+
     route(/.+/, :ingest, command: false)
 
     route(/markov (.+)/, :generate, command: true, help: {
@@ -40,7 +40,7 @@ module Lita::Handlers
     end
 
     def generate(chat)
-      name = chat.matches[0][0].strip
+      name = simplify_name chat.matches[0][0]
       user = Lita::User.fuzzy_find name
 
       if user.nil?
@@ -118,6 +118,12 @@ module Lita::Handlers
 
     def render_backlog_form(response)
       response.write render_template('backlog_form')
+    end
+
+    def simplify_name name
+      name
+        .strip
+        .tr('@', '')
     end
 
     Lita.register_handler self
