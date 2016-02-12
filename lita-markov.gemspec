@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = "lita-markov"
-  spec.version       = "1.2.0"
+  spec.version       = "1.2.1"
   spec.authors       = ["Dirk Gadsden"]
   spec.email         = ["dirk@dirk.to"]
   spec.description   = "Markov chains for Lita."
