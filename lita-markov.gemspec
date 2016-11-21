@@ -15,8 +15,6 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "lita",   ">= 4.6"
   spec.add_runtime_dependency "sequel", "~> 4.28.0"
-  spec.add_runtime_dependency "mysql2", "~> 0.4.1"
-  spec.add_runtime_dependency "pg",     "~> 0.18.4"
   spec.add_runtime_dependency "oj",     "~> 2.13.1"
 
   spec.add_development_dependency "bundler", "~> 1.3"
